@@ -1,0 +1,6 @@
+{
+  "name": "Dairivo - Dairy Marketplace",
+  "description": "Modern multilingual dairy marketplace connecting dairy farmers with local buyers for fresh milk, curd, paneer, ghee, and butter with real-time order tracking and payments.",
+  "requestFramePermissions": ["camera"],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

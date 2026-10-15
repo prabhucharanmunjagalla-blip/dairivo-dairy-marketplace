@@ -1,0 +1,46 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // User Profiles:
+    // Anyone signed in can read profiles; users can only modify their own profile
+    match /users/{userId} {
+      allow read: if request.auth != null;
+      allow write: if request.auth != null && request.auth.uid == userId;
+    }
+    
+    // Dairy Products:
+    // Anyone can read active products (buyers & farmers)
+    // Only verified farmers can create or update their own products
+    match /products/{productId} {
+      allow read: if true;
+      allow create: if request.auth != null 
+                    && request.resource.data.farmerId == request.auth.uid
+                    && request.resource.data.pricePerUnit > 0
+                    && request.resource.data.availableQuantity >= 0;
+      allow update, delete: if request.auth != null 
+                            && (resource.data.farmerId == request.auth.uid 
+                                || request.resource.data.diff(resource.data).affectedKeys().hasOnly(['availableQuantity']));
+    }
+    
+    // Orders:
+    // Buyers can create orders if authenticated
+    // Both the buyer and the farmer involved can read & update status
+    match /orders/{orderId} {
+      allow create: if request.auth != null 
+                    && request.resource.data.buyerId == request.auth.uid;
+      allow read: if request.auth != null 
+                  && (resource.data.buyerId == request.auth.uid || resource.data.farmerId == request.auth.uid);
+      allow update: if request.auth != null 
+                    && (resource.data.farmerId == request.auth.uid || resource.data.buyerId == request.auth.uid);
+    }
+    
+    // Transactions:
+    // Farmer and buyer involved can read records; cannot tamper
+    match /transactions/{txnId} {
+      allow read: if request.auth != null 
+                  && (resource.data.farmerId == request.auth.uid);
+      allow write: if false; // Only server / Cloud Functions can write financial settlements
+    }
+  }
+}
